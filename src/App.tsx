@@ -7,8 +7,10 @@ import DatabaseResetDocs from './components/DatabaseResetDocs';
 import FrontendDeploymentDocs from './components/FrontendDeploymentDocs';
 import DevTestingGuide from './components/DevTestingGuide';
 import SSEGuide from './components/SSEGuide';
+import MemoryMonitorGuide from './components/MemoryMonitorGuide';
+import WebRTCGuide from './components/WebRTCGuide';
 
-type View = 'guide' | 'dashboard' | 'cicd' | 'db-reset' | 'frontend-deploy' | 'dev-testing' | 'sse';
+type View = 'guide' | 'dashboard' | 'cicd' | 'db-reset' | 'frontend-deploy' | 'dev-testing' | 'sse' | 'memory' | 'webrtc';
 
 interface NavItem {
   id: string;
@@ -93,6 +95,24 @@ const App = () => {
         { id: 'implementation', title: '2. Implementation' },
         { id: 'frontend', title: '3. Frontend Logic' },
         { id: 'pitfalls', title: '4. Common Pitfalls' },
+        { id: 'reconnection', title: '5. Reconnection' },
+      ]
+    },
+    'memory': {
+      label: 'Memory Monitor',
+      icon: 'lucide:cpu',
+      sections: [
+        { id: 'monitoring', title: '1. Monitoring' },
+        { id: 'heap-breakdown', title: '2. Heap Spaces' },
+      ]
+    },
+    'webrtc': {
+      label: 'WebRTC Player',
+      icon: 'lucide:video',
+      sections: [
+        { id: 'overview', title: '1. Overview' },
+        { id: 'implementation', title: '2. Implementation' },
+        { id: 'technical-details', title: '3. Critical Path' },
       ]
     }
   };
@@ -214,6 +234,8 @@ const App = () => {
             {view === 'frontend-deploy' && <FrontendDeploymentDocs />}
             {view === 'dev-testing' && <DevTestingGuide />}
             {view === 'sse' && <SSEGuide />}
+            {view === 'memory' && <MemoryMonitorGuide />}
+            {view === 'webrtc' && <WebRTCGuide />}
 
             <footer className="mt-24 pt-10 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-400 text-[10px] uppercase tracking-widest font-bold">
               <p>© 2026 Development Documentation Suite</p>

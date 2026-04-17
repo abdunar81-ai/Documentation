@@ -168,6 +168,37 @@ onUnmounted(() => es?.close());`}
         </div>
       </section>
 
+      <section id="reconnection">
+        <h2 className="text-xl font-semibold text-slate-800 mb-4">5. Reconnection Strategy</h2>
+        <p className="text-slate-600 mb-4 text-sm">
+          Standard <code className="bg-slate-100 px-1 rounded">EventSource</code> has built-in reconnection, but it's often too simple. For robust apps, implement a custom strategy that handles the "Initial State" on every reconnect.
+        </p>
+        <CodeBlock 
+          language="typescript"
+          code={`function connectSSE() {
+  const es = new EventSource('/api/video/stats');
+
+  es.onopen = () => {
+    console.log('Connected to SSE');
+  };
+
+  es.onerror = (err) => {
+    console.error('SSE Error, reconnecting in 5s...', err);
+    es.close();
+    
+    // Exponential backoff or simple timeout
+    setTimeout(() => {
+      connectSSE();
+    }, 5000);
+  };
+
+  // ... other listeners ...
+}
+
+connectSSE();`} 
+        />
+      </section>
+
       <section id="next-steps" className="pt-8">
         <div className="bg-indigo-600 rounded-2xl p-8 text-white">
           <h2 className="text-2xl font-bold mb-4">Next Steps</h2>
