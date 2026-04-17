@@ -1,0 +1,5 @@
+{
+  "name": "Database & Deployment Guide",
+  "description": "A comprehensive technical documentation suite for Prisma database recovery, synchronization, and CI/CD workflows.",
+  "requestFramePermissions": []
+}
