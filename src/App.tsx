@@ -9,8 +9,10 @@ import DevTestingGuide from './components/DevTestingGuide';
 import SSEGuide from './components/SSEGuide';
 import MemoryMonitorGuide from './components/MemoryMonitorGuide';
 import WebRTCGuide from './components/WebRTCGuide';
+import AIDictionGuide from './components/AIDictionGuide';
+import NuxtDeploymentGuide from './components/NuxtDeploymentGuide';
 
-type View = 'guide' | 'dashboard' | 'cicd' | 'db-reset' | 'frontend-deploy' | 'dev-testing' | 'sse' | 'memory' | 'webrtc';
+type View = 'guide' | 'dashboard' | 'cicd' | 'db-reset' | 'frontend-deploy' | 'dev-testing' | 'sse' | 'memory' | 'webrtc' | 'ai-diction' | 'nuxt-deploy';
 
 interface NavItem {
   id: string;
@@ -113,6 +115,28 @@ const App = () => {
         { id: 'overview', title: '1. Overview' },
         { id: 'implementation', title: '2. Implementation' },
         { id: 'technical-details', title: '3. Critical Path' },
+      ]
+    },
+    'ai-diction': {
+      label: 'AI Diction Player',
+      icon: 'lucide:mic',
+      sections: [
+        { id: 'overview', title: 'Overview' },
+        { id: 'implementation', title: 'Vue 3 Logic' },
+        { id: 'audio-processing', title: 'Audio & TTS' },
+        { id: 'mobile-safari', title: 'Safari Compatibility' },
+        { id: 'best-practices', title: 'Best Practices' },
+      ]
+    },
+    'nuxt-deploy': {
+      label: 'Nuxt Deploy',
+      icon: 'lucide:rocket',
+      sections: [
+        { id: 'config', title: 'Variables' },
+        { id: 'step-1', title: '1. Build' },
+        { id: 'step-2', title: '2. PM2' },
+        { id: 'step-3', title: '3. Nginx' },
+        { id: 'step-4', title: '4. SSL' },
       ]
     }
   };
@@ -236,6 +260,8 @@ const App = () => {
             {view === 'sse' && <SSEGuide />}
             {view === 'memory' && <MemoryMonitorGuide />}
             {view === 'webrtc' && <WebRTCGuide />}
+            {view === 'ai-diction' && <AIDictionGuide />}
+            {view === 'nuxt-deploy' && <NuxtDeploymentGuide />}
 
             <footer className="mt-24 pt-10 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-400 text-[10px] uppercase tracking-widest font-bold">
               <p>© 2026 Development Documentation Suite</p>
