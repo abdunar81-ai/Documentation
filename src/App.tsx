@@ -3,7 +3,6 @@ import { Icon } from '@iconify/react';
 import RecoveryGuide from './components/RecoveryGuide';
 import ConflictResolver from './components/ConflictResolver';
 import CICDDocs from './components/CICDDocs';
-import DatabaseResetDocs from './components/DatabaseResetDocs';
 import FrontendDeploymentDocs from './components/FrontendDeploymentDocs';
 import DevTestingGuide from './components/DevTestingGuide';
 import SSEGuide from './components/SSEGuide';
@@ -12,7 +11,7 @@ import WebRTCGuide from './components/WebRTCGuide';
 import AIDictionGuide from './components/AIDictionGuide';
 import NuxtDeploymentGuide from './components/NuxtDeploymentGuide';
 
-type View = 'guide' | 'dashboard' | 'cicd' | 'db-reset' | 'frontend-deploy' | 'dev-testing' | 'sse' | 'memory' | 'webrtc' | 'ai-diction' | 'nuxt-deploy';
+type View = 'guide' | 'dashboard' | 'cicd' | 'frontend-deploy' | 'dev-testing' | 'sse' | 'memory' | 'webrtc' | 'ai-diction' | 'nuxt-deploy';
 
 interface NavItem {
   id: string;
@@ -55,18 +54,6 @@ const App = () => {
         { id: 'step-4', title: '5. Nginx Config' },
       ]
     },
-    'db-reset': {
-      label: 'DB Reset',
-      icon: 'lucide:refresh-cw',
-      sections: [
-        { id: 'overview', title: 'Overview' },
-        { id: 'prerequisites', title: 'Prerequisites' },
-        { id: 'step-1', title: '1. Initial Backup' },
-        { id: 'step-2', title: '2. Reset Endpoint' },
-        { id: 'step-3', title: '3. Triggering' },
-        { id: 'plumbing', title: '4. Schema Plumbing' },
-      ]
-    },
     'frontend-deploy': {
       label: 'Frontend Deploy',
       icon: 'lucide:globe',
@@ -79,14 +66,12 @@ const App = () => {
       ]
     },
     'dev-testing': {
-      label: 'DB Reset Guide',
-      icon: 'lucide:flask-conical',
+      label: 'Database Guide',
+      icon: 'lucide:database',
       sections: [
-        { id: 'manual', title: '1. Manual Backup' },
-        { id: 'replace', title: '2. Manual Replace' },
-        { id: 'reset', title: '3. Node.js Reset' },
-        { id: 'route', title: '4. Route Handlers' },
-        { id: 'endpoint', title: '5. Backup Creation' },
+        { id: 'manual', title: '1. Manual Snapshot' },
+        { id: 'reset', title: '2. Node.js Reset' },
+        { id: 'route', title: '3. Strategy' },
       ]
     },
     'sse': {
@@ -254,7 +239,6 @@ const App = () => {
             {view === 'guide' && <RecoveryGuide />}
             {view === 'dashboard' && <ConflictResolver />}
             {view === 'cicd' && <CICDDocs />}
-            {view === 'db-reset' && <DatabaseResetDocs />}
             {view === 'frontend-deploy' && <FrontendDeploymentDocs />}
             {view === 'dev-testing' && <DevTestingGuide />}
             {view === 'sse' && <SSEGuide />}

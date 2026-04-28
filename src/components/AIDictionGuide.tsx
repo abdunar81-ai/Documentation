@@ -1,150 +1,160 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Icon } from '@iconify/react';
 import { CodeBlock, InlineCode, Callout } from './Shared';
 
 const AIDictionGuide = () => {
+  const [activeTab, setActiveTab] = useState<'vue' | 'logic'>('vue');
+
   return (
-    <article className="space-y-12">
+    <article className="space-y-12 pb-20">
       <section id="overview">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6 tracking-tight">AI Diction & Pronunciation Player</h1>
-        <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-          This "battle-tested" implementation provides a high-performance interface for language learning, combining real-time speech recognition, compressed audio recording, and AI-driven pronunciation feedback.
-        </p>
-        
-        <div className="grid sm:grid-cols-2 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200">
-            <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-              Dual-Path Evaluation
-            </h4>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Uses built-in Browser Speech API for instant transcripts, with a robust RecordRTC fallback that sends compressed audio to Gemini for precise phonetic analysis.
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Icon icon="lucide:mic" className="text-indigo-600" />
+              AI Diction & Pronunciation
+            </h1>
+            <p className="text-slate-500 mt-1 text-sm leading-relaxed">
+              A high-performance interface for language learning using Gemini-powered phonetic analysis.
             </p>
           </div>
-          <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200">
-            <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-              Advanced TTS
-            </h4>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Employs pre-loading and PCM-level control to play high-quality AI-generated speech with specific emotions and Kazakhstan-localizations (KK).
-            </p>
+          <div className="flex gap-2 p-1 bg-slate-100 rounded-xl shrink-0">
+            <button 
+              onClick={() => setActiveTab('vue')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'vue' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Vue Template
+            </button>
+            <button 
+              onClick={() => setActiveTab('logic')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'logic' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Core Logic
+            </button>
           </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+           {[
+             { icon: "lucide:zap", label: "Dual-Path", desc: "Speech API for speed, RecordRTC for accuracy." },
+             { icon: "lucide:cpu", label: "24kHz PCM", desc: "Raw AudioContext control for AI TTS playback." },
+             { icon: "lucide:iphone", label: "MIME-Safe", desc: "Auto-detects Opus vs AAC for iOS compatibility." }
+           ].map((item, i) => (
+             <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+               <Icon icon={item.icon} className="w-5 h-5 text-indigo-600 mb-2" />
+               <h4 className="text-sm font-bold text-slate-900">{item.label}</h4>
+               <p className="text-xs text-slate-500 mt-1">{item.desc}</p>
+             </div>
+           ))}
         </div>
       </section>
 
       <section id="implementation">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">Core Vue 3 Implementation</h2>
-        <p className="text-slate-600 mb-4 text-sm">
-          A fine-grained implementation focusing on mobile compatibility (iOS/Android mime-types) and memory management.
-        </p>
-        <CodeBlock 
-          language="vue"
-          code={`<template>
-  <div class="w-full h-[100dvh] bg-[#05070a] text-white flex flex-col items-center justify-between p-6 relative overflow-hidden">
-    <!-- UI Layout: Header, Evaluation Display, Controls, Progress -->
+        {activeTab === 'vue' ? (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-slate-800">UI Structure</h3>
+            <CodeBlock 
+              language="vue"
+              code={`<template>
+  <div class="h-[100dvh] bg-[#05070a] text-white flex flex-col p-6">
+    <!-- Actor & Emotion Info -->
+    <div class="text-[#00d2ff] text-sm font-bold uppercase">{{ currentLine.actor }}</div>
     
-    <!-- Evaluation Display Example -->
-    <div v-if="evaluation" class="inline">
-      <span
-        v-for="(w, i) in evaluation"
-        :key="i"
-        class="mr-2 inline-block"
-        :class="w.correct ? 'text-[#00ff88]' : 'text-[#ff4b4b] underline decoration-wavy'"
-      >
-        {{ w.word }}
+    <!-- Dynamic Evaluation Display -->
+    <div class="text-3xl font-serif min-h-[140px] flex items-center justify-center">
+      <span v-for="word in evaluation" :class="word.correct ? 'text-[#00ff88]' : 'text-[#ff4b4b] underline-wavy'">
+        {{ word.word }}
       </span>
     </div>
 
-    <!-- Microhone / Start Recording Toggle -->
-    <button @click="toggleRecording" :class="isRecording ? 'bg-red-500' : 'bg-[#00d2ff]'">
-      <Mic v-else :size="28" />
+    <!-- Recording Controls -->
+    <button @click="toggleRecording" :class="isRecording ? 'bg-red-500 animate-pulse' : 'bg-[#00d2ff] text-black'">
+      <Mic :size="28" />
     </button>
   </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import RecordRTC from 'recordrtc'
-import { evaluatePronunciation, generateTTS, uploadAudioRecording } from '@/utils/geminiService'
-
-// Logic handles:
-// 1. Browser SpeechRecognition (Instant result)
-// 2. RecordRTC (Compressed Blob fallback for Backend AI)
-// 3. AudioContext PCM Playback (High-fidelity TTS)
-
-const toggleRecording = async () => {
+</template>`} 
+            />
+          </div>
+        ) : (
+          <div className="space-y-4">
+             <h3 className="text-lg font-bold text-slate-800">The Battle-Tested Logic</h3>
+             <CodeBlock 
+               language="typescript"
+               code={`const toggleRecording = async () => {
   if (isRecording.value) {
     recordRTC.stopRecording(async () => {
-      const blob = recordRTC!.getBlob()
-      // Send to Gemini for evaluate-audio
-      evaluation.value = await uploadAudioRecording(blob, currentLine.value.text)
-    })
+      const blob = recordRTC!.getBlob();
+      // 1. Process with Gemini Backend
+      evaluation.value = await uploadAudioRecording(blob, currentLine.value.text);
+      // 2. Play high-quality TTS response
+      playTTS();
+    });
   } else {
-    // Detect best MIME for platform (WebM for Chrome, MP4 for iOS)
-    const bestMimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
-      ? 'audio/webm;codecs=opus' 
-      : 'audio/mp4'
-      
-    recordRTC = new RecordRTC(userMediaStream, { type: 'audio', mimeType: bestMimeType })
-    recordRTC.startRecording()
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // IMPORTANT: check for iOS Safari compatibility
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm' : 'audio/mp4';
+    recordRTC = new RecordRTC(stream, { type: 'audio', mimeType: mime });
+    recordRTC.startRecording();
   }
-}
-</script>`} 
-        />
+};`} 
+             />
+          </div>
+        )}
       </section>
 
-      <section id="audio-processing">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">Advanced Audio & TTS Logic</h2>
-        <p className="text-slate-600 mb-4 text-sm">
-          The implementation uses raw <InlineCode>AudioContext</InlineCode> to handle 24kHz Int16 PCM data returned from AI models, ensuring zero-latency transitions and emotion sync.
-        </p>
-        <CodeBlock 
-          language="typescript"
-          code={`const playTTS = async () => {
-  const base64Audio = preloadedTTSAudio.value || await generateTTS(...)
+      <section id="audio-processing" className="space-y-6">
+        <h2 className="text-2xl font-bold text-slate-900">Audio Pipeline & TTS</h2>
+        <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 shadow-2xl relative overflow-hidden">
+          <div className="relative z-10">
+            <h4 className="text-indigo-400 font-bold text-xs uppercase tracking-widest mb-4">Handling 24kHz PCM</h4>
+            <pre className="text-sm font-mono text-indigo-100/90 whitespace-pre-wrap leading-relaxed">
+{`const playTTS = async (base64) => {
+  const binary = atob(base64);
+  const pcmData = new Int16Array(binary.length / 2);
+  const audioBuffer = audioCtx.createBuffer(1, pcmData.length, 24000);
   
-  if (base64Audio && audioCtx) {
-    const binaryString = atob(base64Audio)
-    const pcmData = new Int16Array(binaryString.length / 2)
-    // ... data view conversion ...
-
-    const audioBuffer = audioCtx.createBuffer(1, pcmData.length, 24000)
-    audioBuffer.getChannelData(0).set(pcmData.map(v => v / 32768.0))
-
-    const source = audioCtx.createBufferSource()
-    source.buffer = audioBuffer
-    source.connect(audioCtx.destination)
-    source.start()
-  }
-}`} 
-        />
-      </section>
-
-      <section id="mobile-safari">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">Mobile & Safari Compatibility</h2>
-        <Callout type="warning" title="Critical: iOS Audio Support">
-          iOS Safari does NOT support <InlineCode>audio/webm</InlineCode>. To make this production-ready, your implementation MUST check <InlineCode>MediaRecorder.isTypeSupported</InlineCode> and fallback to <InlineCode>audio/mp4</InlineCode> for RecordRTC, or the server will receive corrupt headers.
-        </Callout>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl border border-slate-200">
-            <h5 className="font-bold text-slate-900 text-xs uppercase mb-2">WebM (Android/Chrome)</h5>
-            <p className="text-xs text-slate-500 italic">audio/webm;codecs=opus</p>
+  // Convert Int16 PCM to Float32 for WebAudio
+  audioBuffer.getChannelData(0).set(pcmData.map(v => v / 32768.0));
+  
+  const source = audioCtx.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(audioCtx.destination);
+  source.start();
+};`}
+            </pre>
           </div>
-          <div className="p-4 rounded-xl border border-slate-200">
-            <h5 className="font-bold text-slate-900 text-xs uppercase mb-2">MP4 (iOS Safari)</h5>
-            <p className="text-xs text-slate-500 italic">audio/mp4</p>
-          </div>
+          <Icon icon="lucide:volume-2" className="absolute -right-4 -bottom-4 text-white/5" width="200" />
         </div>
       </section>
 
-      <section id="best-practices">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">Best Practices</h2>
-        <ul className="space-y-3 text-sm text-slate-600 list-disc ml-4">
-          <li><strong>Pre-loading:</strong> Always pre-load the TTS audio for the "Next" line as soon as the user advances to avoid 1-2s generation pauses.</li>
-          <li><strong>Clean Cleanup:</strong> Use <InlineCode>track.stop()</InlineCode> on all MediaStream tracks after recording finishes to turn off the OS recording indicator (red dot).</li>
-          <li><strong>Visual Feedback:</strong> Use CSS <InlineCode>underline decoration-wavy</InlineCode> for mispronounced words to differentiate structural spelling errors from phonetic ones.</li>
-        </ul>
+      <section id="mobile-safari">
+        <Callout type="info" title="Cross-Platform Reliability">
+           To ensure this works on <strong>Mobile Safari</strong>, the recording blob must be captured as <InlineCode>audio/mp4</InlineCode>. If you send <InlineCode>audio/webm</InlineCode> from an iPhone, the backend processing will likely fail due to invalid header signatures.
+        </Callout>
+      </section>
+
+      <section id="best-practices" className="pt-8 border-t border-slate-100">
+         <h3 className="text-lg font-bold text-slate-800 mb-6">Performance Checklist</h3>
+         <div className="grid sm:grid-cols-2 gap-4">
+           <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-start gap-3">
+             <Icon icon="lucide:forward" className="text-indigo-600 mt-1" />
+             <div>
+               <p className="text-sm font-bold text-slate-900">Pre-loading</p>
+               <p className="text-xs text-slate-500 mt-1">Generate the next line's TTS audio while the user is still on the current line.</p>
+             </div>
+           </div>
+           <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-start gap-3">
+             <Icon icon="lucide:trash-2" className="text-indigo-600 mt-1" />
+             <div>
+               <p className="text-sm font-bold text-slate-900">Cleanup</p>
+               <p className="text-xs text-slate-500 mt-1">Disconnect microphone streams immediately after <InlineCode>stopRecording</InlineCode> to turn off OS indicator.</p>
+             </div>
+           </div>
+         </div>
       </section>
     </article>
   );
 };
 
 export default AIDictionGuide;
+

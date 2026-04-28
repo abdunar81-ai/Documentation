@@ -1,118 +1,164 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { CodeBlock } from './Shared';
+import { CodeBlock, InlineCode, Callout, StepHeader } from './Shared';
 
 const RecoveryGuide = () => {
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+
+  const toggleStep = (step: number) => {
+    setCompletedSteps(prev => 
+      prev.includes(step) ? prev.filter(s => s !== step) : [...prev, step]
+    );
+  };
+
+  const progress = Math.round((completedSteps.length / 4) * 100);
+
   return (
-    <article>
-      <h1 id="overview" className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Recovery & Baselining Protocol</h1>
-      <p className="text-xl text-slate-600 mb-10 leading-relaxed">
-        Learn how to restore synchronization between Prisma Schema and an existing database without data loss, even when drift is detected.
-      </p>
-
-      <div className="bg-amber-50 border-l-4 border-amber-400 p-6 my-8 rounded-r-lg">
-        <div className="flex items-center gap-3 text-amber-800 font-bold mb-2">
-          <Icon icon="lucide:alert-circle" width="20" />
-          <span>The Reset Trap</span>
+    <article className="space-y-12 pb-20">
+      <section id="overview">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+          <div>
+             <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+               <Icon icon="lucide:shield-alert" className="text-red-500" />
+               Recovery & Baselining
+             </h1>
+             <p className="text-slate-500 mt-1 text-sm leading-relaxed">
+               Restore sync between Prisma and an existing database without data loss.
+             </p>
+          </div>
+          <div className="flex items-center gap-3 bg-slate-100 px-4 py-2 rounded-2xl">
+             <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-indigo-600 transition-all duration-500" 
+                  style={{ width: `${progress}%` }} 
+                />
+             </div>
+             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{progress}% Restored</span>
+          </div>
         </div>
-        <p className="text-amber-900 text-sm leading-relaxed">
-          If <code>prisma migrate dev</code> asks to <strong>Reset the database</strong>, it will drop all schemas and tables. If you have production or legacy data, you must follow the baselining protocol instead.
-        </p>
-      </div>
 
-      <section id="safety" className="mt-16">
-        <h2 className="text-2xl font-bold border-b border-slate-200 pb-2 mb-6 tracking-tight">1. Safety First</h2>
-        <p className="text-slate-700 leading-relaxed">
-          Before any manual intervention, secure your data. Perform a full dump of your current database state.
-        </p>
-        <CodeBlock 
-          language="bash"
-          code="pg_dump -U postgres -h localhost -d my_app_db > backup.sql" 
-        />
+        <Callout type="error" title="Critical Warning: The Reset Trap">
+          If <InlineCode>prisma migrate dev</InlineCode> asks to <strong>Reset the database</strong>, it will drop all tables. 
+          Stop immediately. Follow this baselining protocol instead.
+        </Callout>
       </section>
 
-      <section id="surgery" className="mt-16">
-        <h2 className="text-2xl font-bold border-b border-slate-200 pb-2 mb-6 tracking-tight">2. Database Surgery</h2>
-        <p className="text-slate-700 leading-relaxed mb-4">
-          Prisma fails when the migration history is desynced or when it encounters native constraints it can't map. We must clear the history log and fix structural conflicts.
-        </p>
-        <div className="bg-blue-50 border-l-4 border-[#5A67D8] p-6 my-6 rounded-r-lg">
-          <div className="flex items-center gap-2 text-[#5A67D8] font-bold mb-2 uppercase text-xs tracking-wider">
-            <Icon icon="lucide:info" width="16" />
-            <span>Pro Tip</span>
-          </div>
-          <p className="text-slate-700 text-sm">
-            Prisma requires Primary Keys to be <code>NOT NULL</code>. If your legacy DB has nullable IDs, migration will crash with <strong>P3006</strong>.
-          </p>
-        </div>
-        <CodeBlock 
-          language="sql"
-          code={`-- Clear corrupted migration history
+      <div className="space-y-16">
+        <section id="safety">
+          <StepHeader number={1} title="Data Lockdown" icon="lucide:lock" />
+          <p className="text-sm text-slate-600 mb-6">Before any manual intervention, perform a full raw SQL dump of your current state.</p>
+          <CodeBlock 
+            language="bash"
+            code="pg_dump -U postgres -h localhost -d my_app_db > backup.sql" 
+          />
+          <button 
+            onClick={() => toggleStep(1)}
+            className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              completedSteps.includes(1) 
+                ? 'bg-emerald-100 text-emerald-700' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <Icon icon={completedSteps.includes(1) ? "lucide:check-circle" : "lucide:circle"} />
+            {completedSteps.includes(1) ? 'Backup Verified' : 'Mark as Backed Up'}
+          </button>
+        </section>
+
+        <section id="surgery">
+          <StepHeader number={2} title="Structural Correction" icon="lucide:activity" />
+          <p className="text-sm text-slate-600 mb-6">Prisma fails if migration history is corrupted. Clear the meta-table and fix ID nullability conflicts.</p>
+          <CodeBlock 
+            language="sql"
+            code={`-- Remove corrupted metadata
 DROP TABLE IF EXISTS "_prisma_migrations";
 
--- Fix Primary Key nullability conflicts
-ALTER TABLE "users" ALTER COLUMN "id" SET NOT NULL;
+-- Ensure IDs are NOT NULL (Required for Prisma)
+ALTER TABLE "users" ALTER COLUMN "id" SET NOT NULL;`} 
+          />
+          <button 
+            onClick={() => toggleStep(2)}
+            className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              completedSteps.includes(2) 
+                ? 'bg-emerald-100 text-emerald-700' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <Icon icon={completedSteps.includes(2) ? "lucide:check-circle" : "lucide:circle"} />
+            {completedSteps.includes(2) ? 'Schema Sanitized' : 'Confirm Schema Cleanup'}
+          </button>
+        </section>
 
--- Remove native constraints that block Prisma's shadow engine
-ALTER TABLE "league_entries" DROP CONSTRAINT IF EXISTS "check_league_type";`} 
-        />
-      </section>
+        <section id="cleanup">
+          <StepHeader number={3} title="Migration Purge" icon="lucide:trash-2" />
+          <p className="text-sm text-slate-600 mb-6">Delete the physical migration files from your folder to resolve checksum checksum conflicts.</p>
+          <CodeBlock 
+            language="bash" 
+            code="# Linux / Mac
+rm -rf prisma/migrations
 
-      <section id="cleanup" className="mt-16">
-        <h2 className="text-2xl font-bold border-b border-slate-200 pb-2 mb-6 tracking-tight">3. Environment Cleanup</h2>
-        <p className="text-slate-700 leading-relaxed">
-          Delete the old, conflicting migration files from your local project to prevent checksum errors.
-        </p>
-        <CodeBlock 
-          code="# Windows (CMD)
-rmdir /s /q prisma\\migrations
+# Windows
+rmdir /s /q prisma\\migrations" 
+          />
+          <button 
+            onClick={() => toggleStep(3)}
+            className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              completedSteps.includes(3) 
+                ? 'bg-emerald-100 text-emerald-700' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <Icon icon={completedSteps.includes(3) ? "lucide:check-circle" : "lucide:circle"} />
+            {completedSteps.includes(3) ? 'Files Purged' : 'Mark as Purged'}
+          </button>
+        </section>
 
-# Mac / Linux
-rm -rf prisma/migrations" 
-        />
-      </section>
-
-      <section id="baseline" className="mt-16">
-        <h2 className="text-2xl font-bold border-b border-slate-200 pb-2 mb-6 tracking-tight">4. Baselining Protocol</h2>
-        <p className="text-slate-700 leading-relaxed">
-          The final step is to "lie" to Prisma's history log, telling it that the current state is the official starting point.
-        </p>
-        <div className="space-y-8 mt-6">
-          <div>
-            <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-              <span className="bg-slate-200 text-slate-700 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>
-              Introspect Database
-            </h4>
-            <p className="text-sm text-slate-500 mb-2 px-7 italic">Align the schema file with physical tables.</p>
-            <CodeBlock code="npx prisma db pull" />
+        <section id="baseline">
+          <StepHeader number={4} title="Baselining Registry" icon="lucide:list-checks" />
+          <p className="text-sm text-slate-600 mb-6">Mirror your schema with the DB and manually record the 'init' state in the history log.</p>
+          <div className="space-y-4">
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl">
+               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Step A: Introspect</div>
+               <CodeBlock language="bash" code="npx prisma db pull" />
+            </div>
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl">
+               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Step B: Generate Initial SQL</div>
+               <CodeBlock language="bash" code="npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script --output prisma/migrations/0_init/migration.sql" />
+            </div>
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl text-left">
+               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Step C: Resolve (Soft Apply)</div>
+               <CodeBlock language="bash" code="npx prisma migrate resolve --applied 0_init" />
+            </div>
           </div>
-          <div>
-            <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-              <span className="bg-slate-200 text-slate-700 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>
-              Generate Baseline Script
-            </h4>
-            <p className="text-sm text-slate-500 mb-2 px-7 italic">Create the baseline folder and SQL file.</p>
-            <CodeBlock code="npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script --output prisma/migrations/0_init/migration.sql" />
-          </div>
-          <div>
-            <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-              <span className="bg-slate-200 text-slate-700 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
-              Apply to History
-            </h4>
-            <p className="text-sm text-slate-500 mb-2 px-7 italic">Record the migration as applied without executing it.</p>
-            <CodeBlock code="npx prisma migrate resolve --applied 0_init" />
-          </div>
-        </div>
-      </section>
+          <button 
+            onClick={() => toggleStep(4)}
+            className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              completedSteps.includes(4) 
+                ? 'bg-emerald-100 text-emerald-700' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <Icon icon={completedSteps.includes(4) ? "lucide:check-circle" : "lucide:circle"} />
+            {completedSteps.includes(4) ? 'Baseline Established' : 'Finalize Baseline'}
+          </button>
+        </section>
+      </div>
 
-      <section id="future" className="mt-20 pt-10 border-t border-slate-200">
-        <h2 className="text-2xl font-bold tracking-tight mb-4 text-slate-900">Next Steps</h2>
-        <p className="text-slate-600 mb-8 leading-relaxed">
-          Now that your database is in sync, you can proceed with your development. To avoid future drift issues, follow the best practices outlined in this guide.
-        </p>
-      </section>
+      {progress === 100 && (
+        <section className="pt-12">
+          <div className="p-8 rounded-3xl bg-emerald-600 text-white shadow-xl shadow-emerald-200">
+            <h3 className="text-2xl font-bold mb-2">System Restored</h3>
+            <p className="opacity-90 leading-relaxed mb-6">
+              Prisma is now in sync with your physical database. Future migrations can now proceed normally without data loss.
+            </p>
+            <div className="flex gap-4">
+               <button className="px-6 py-3 bg-white text-emerald-600 font-bold rounded-xl text-sm">Verify with introspection</button>
+            </div>
+          </div>
+        </section>
+      )}
     </article>
   );
 };
 
 export default RecoveryGuide;
+

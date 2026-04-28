@@ -1,163 +1,137 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { CodeBlock, InlineCode, Callout, StepHeader } from './Shared';
 
 const FrontendDeploymentDocs = () => {
+  const [config, setConfig] = useState({
+    domain: 'new-admin.meyram.kz',
+    appPath: '/var/www/new-admin.meyram.kz',
+  });
+
+  const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig({ ...config, [e.target.name]: e.target.value });
+  };
+
   return (
-    <article className="space-y-12">
+    <article className="space-y-12 pb-20">
       <section id="overview">
-        <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Frontend Deployment Guide</h1>
-        <p className="text-xl text-slate-600 mb-8 leading-relaxed">
-          Complete end-to-end guide for deploying your Vue/Vite frontend to <InlineCode>new-admin.meyram.kz</InlineCode>, including Nginx optimization and HTTPS security.
-        </p>
-        
-        <div className="flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 text-sm">
-          <Icon icon="lucide:info" width="20" />
-          <p>Steps marked as <span className="font-bold uppercase">(Skippable)</span> involve software you likely already have installed.</p>
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+          <div>
+             <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+               <Icon icon="lucide:globe" className="text-indigo-600" />
+               Frontend Deployment
+             </h1>
+             <p className="text-slate-500 mt-1 text-sm leading-relaxed">
+               Best practices for deploying high-performance SPAs (React/Vue) using Nginx and SSL.
+             </p>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-100 px-4 py-2 rounded-full text-emerald-700 text-sm font-bold shadow-sm flex items-center gap-2 shrink-0">
+             <Icon icon="lucide:shield-check" width="16" />
+             Nginx + Certbot
+          </div>
+        </div>
+
+        {/* Dynamic Config */}
+        <div className="p-6 bg-slate-50 border border-slate-200 rounded-3xl mb-10">
+          <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold">
+            <Icon icon="lucide:settings" />
+            Deployment Variables
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Domain Name</label>
+              <input type="text" name="domain" value={config.domain} onChange={handleConfigChange} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Server Root Path</label>
+              <input type="text" name="appPath" value={config.appPath} onChange={handleConfigChange} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="phase-1">
-        <StepHeader number={1} title="Prepare the Server Directory" icon="lucide:folder-plus" />
-        <p className="text-slate-700 leading-relaxed mb-6">
-          Create a dedicated home for your compiled dashboard files and ensure permissions allow Nginx to serve them securely.
-        </p>
+      <div className="space-y-16">
+        <section id="phase-1">
+          <StepHeader number={1} title="Directory Infrastructure" icon="lucide:folder-plus" />
+          <p className="text-sm text-slate-600 mb-6">Create the target directory and ensure the current user has ownership to prevent permission errors during deployment.</p>
+          <CodeBlock 
+            language="bash"
+            code={`sudo mkdir -p ${config.appPath}
+sudo chown -R $USER:$USER ${config.appPath}`} 
+          />
+        </section>
 
-        <h3 className="text-lg font-semibold text-slate-900 mb-3">1. Create the web directory</h3>
-        <CodeBlock 
-          language="bash"
-          code={`sudo mkdir -p /var/www/new-admin.meyram.kz`} 
-        />
-
-        <h3 className="text-lg font-semibold text-slate-900 mt-8 mb-3">2. Transfer build files</h3>
-        <p className="text-slate-600 text-sm mb-4 italic">
-          Run <InlineCode>npm run build</InlineCode> locally, then move the <InlineCode>dist</InlineCode> contents to the server.
-        </p>
-        <Callout type="info" title="CI/CD Note">
-          If using GitHub Actions, ensure your deployment script syncs the <InlineCode>dist</InlineCode> output directly to <InlineCode>/var/www/new-admin.meyram.kz/</InlineCode> via SSH.
-        </Callout>
-
-        <h3 className="text-lg font-semibold text-slate-900 mt-8 mb-3">3. Set directory permissions</h3>
-        <CodeBlock 
-          language="bash"
-          code={`# Assign ownership to the web server user
-sudo chown -R www-data:www-data /var/www/new-admin.meyram.kz
-sudo chmod -R 755 /var/www/new-admin.meyram.kz`} 
-        />
-      </section>
-
-      <section id="phase-2">
-        <StepHeader number={2} title="Nginx Site Configuration" icon="lucide:settings" />
-        <p className="text-slate-700 leading-relaxed mb-6">
-          Configure Nginx to route traffic to your static files and handle Vue Router's history mode.
-        </p>
-
-        <h3 className="text-lg font-semibold text-slate-900 mb-3">1. Create the configuration file</h3>
-        <CodeBlock 
-          language="bash"
-          code={`sudo nano /etc/nginx/sites-available/new-admin.meyram.kz`} 
-        />
-
-        <h3 className="text-lg font-semibold text-slate-900 mt-8 mb-3">2. Add optimized Vite configuration</h3>
-        <CodeBlock 
-          language="nginx"
-          code={`server {
+        <section id="phase-2">
+          <StepHeader number={2} title="Nginx Configuration" icon="lucide:server" />
+          <p className="text-sm text-slate-600 mb-6">Create a site configuration file in <InlineCode>/etc/nginx/sites-available/</InlineCode> with SPA fallback rules.</p>
+          <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-800/80 bg-slate-800/30">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{config.domain}.conf</span>
+              <Icon icon="lucide:copy" className="w-4 h-4 text-indigo-400 cursor-pointer" />
+            </div>
+            <div className="p-6 overflow-x-auto text-sm font-mono text-indigo-100/90 leading-relaxed">
+<pre>{`server {
     listen 80;
-    server_name new-admin.meyram.kz;
-
-    root /var/www/new-admin.meyram.kz;
+    server_name ${config.domain};
+    root ${config.appPath};
     index index.html;
 
-    # Gzip compression for faster loading
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-
-    # Essential for Vue Router (History Mode)
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # Cache Vite hashed assets for 1 year
-    location /assets/ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+    # Optimization: Cache static assets
+    location ~* \\.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|otf|svg)$ {
+        expires 6M;
+        access_log off;
+        add_header Cache-Control "public";
     }
+}`}</pre>
+            </div>
+          </div>
+        </section>
 
-    # Logging
-    error_log  /var/log/nginx/new-admin-error.log;
-    access_log /var/log/nginx/new-admin-access.log;
-}`} 
-        />
-      </section>
-
-      <section id="phase-3">
-        <StepHeader number={3} title="Enable the Site" icon="lucide:check-circle" />
-        <p className="text-slate-700 leading-relaxed mb-6">
-          Activate the configuration by linking it to the <InlineCode>sites-enabled</InlineCode> directory.
-        </p>
-
-        <h3 className="text-lg font-semibold text-slate-900 mb-3">1. Create the symbolic link</h3>
-        <CodeBlock 
-          language="bash"
-          code={`sudo ln -s /etc/nginx/sites-available/new-admin.meyram.kz /etc/nginx/sites-enabled/`} 
-        />
-
-        <h3 className="text-lg font-semibold text-slate-900 mt-8 mb-3">2. Test and Reload</h3>
-        <CodeBlock 
-          language="bash"
-          code={`# Verify syntax
+        <section id="phase-3">
+          <StepHeader number={3} title="Enable site & Reload" icon="lucide:refresh-cw" />
+          <p className="text-sm text-slate-600 mb-6">Link the configuration to <InlineCode>sites-enabled</InlineCode> and verify the syntax before reloading.</p>
+          <CodeBlock 
+            language="bash"
+            code={`sudo ln -s /etc/nginx/sites-available/${config.domain} /etc/nginx/sites-enabled/
 sudo nginx -t
-
-# Reload Nginx
 sudo systemctl reload nginx`} 
-        />
-      </section>
+          />
+        </section>
 
-      <section id="phase-4">
-        <StepHeader number={4} title="Secure with HTTPS (SSL)" icon="lucide:lock" />
-        <p className="text-slate-700 leading-relaxed mb-6">
-          Use Certbot to provision a free Let's Encrypt SSL certificate and force HTTPS.
-        </p>
+        <section id="phase-4">
+          <StepHeader number={4} title="Secure HTTPS with Certbot" icon="lucide:lock" />
+          <p className="text-sm text-slate-600 mb-6">Automate SSL certificate generation and auto-renewal using Let's Encrypt.</p>
+          <CodeBlock 
+            language="bash"
+            code={`sudo certbot --nginx -d ${config.domain}`} 
+          />
+          <Callout type="info" title="Automatic Renewal">
+            Certbot automatically adds a timer to systemd. You can verify it with <InlineCode>sudo systemctl list-timers</InlineCode>.
+          </Callout>
+        </section>
+      </div>
 
-        <h3 className="text-lg font-semibold text-slate-900 mb-3">1. Install Certbot <span className="text-slate-400 font-normal text-sm uppercase ml-2">(Skippable)</span></h3>
-        <CodeBlock 
-          language="bash"
-          code={`sudo apt update
-sudo apt install certbot python3-certbot-nginx`} 
-        />
-
-        <h3 className="text-lg font-semibold text-slate-900 mt-8 mb-3">2. Obtain the Certificate</h3>
-        <CodeBlock 
-          language="bash"
-          code={`sudo certbot --nginx -d new-admin.meyram.kz`} 
-        />
-        <ul className="mt-4 list-disc ml-6 space-y-2 text-sm text-slate-600">
-          <li>Enter an admin email when prompted.</li>
-          <li>Agree to the Terms of Service.</li>
-          <li><span className="font-bold text-indigo-600">Crucial:</span> Select <span className="font-bold underline">Option 2 (Redirect)</span> to force HTTPS.</li>
-        </ul>
-
-        <h3 className="text-lg font-semibold text-slate-900 mt-8 mb-3">3. Verify Auto-Renewal</h3>
-        <CodeBlock 
-          language="bash"
-          code={`sudo certbot renew --dry-run`} 
-        />
-      </section>
-
-      <section id="conclusion" className="pt-12 border-t border-slate-100">
-        <div className="p-8 rounded-3xl bg-indigo-600 text-white shadow-xl shadow-indigo-200">
-          <h3 className="text-2xl font-bold mb-4">Deployment Complete!</h3>
-          <p className="opacity-90 leading-relaxed mb-6">
-            Your frontend is now live and secure at <InlineCode className="bg-white/20 text-white border-white/20">https://new-admin.meyram.kz</InlineCode>.
-          </p>
-          <button className="flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors">
-            <Icon icon="lucide:github" width="20" />
-            Update GitHub Actions Workflow
-          </button>
-        </div>
+      <section id="best-practices" className="grid md:grid-cols-2 gap-8 pt-12 border-t border-slate-100">
+         <div className="p-6 rounded-3xl bg-indigo-50 border border-indigo-100">
+           <h4 className="font-bold text-indigo-900 mb-2">Gzip Compression</h4>
+           <p className="text-xs text-indigo-700 leading-relaxed">
+             Always enable Gzip in your <InlineCode>nginx.conf</InlineCode> to reduce bundle size by up to 70%. Ensure <InlineCode>gzip_types</InlineCode> includes <InlineCode>application/javascript</InlineCode> and <InlineCode>text/css</InlineCode>.
+           </p>
+         </div>
+         <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+            <h4 className="font-bold text-slate-900 mb-2">Build Analysis</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Before deploying, run <InlineCode>npm run build</InlineCode> and check the <InlineCode>dist/</InlineCode> folder size. Use <InlineCode>rollup-plugin-visualizer</InlineCode> to find large dependencies.
+            </p>
+         </div>
       </section>
     </article>
   );
 };
 
 export default FrontendDeploymentDocs;
+
