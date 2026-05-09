@@ -10,8 +10,10 @@ import MemoryMonitorGuide from './components/MemoryMonitorGuide';
 import WebRTCGuide from './components/WebRTCGuide';
 import AIDictionGuide from './components/AIDictionGuide';
 import NuxtDeploymentGuide from './components/NuxtDeploymentGuide';
+import VpsDeployGuide from './components/VpsDeployGuide';
+import IPhoneHttpsGuide from './components/IPhoneHttpsGuide';
 
-type View = 'guide' | 'dashboard' | 'cicd' | 'frontend-deploy' | 'dev-testing' | 'sse' | 'memory' | 'webrtc' | 'ai-diction' | 'nuxt-deploy';
+type View = 'guide' | 'dashboard' | 'cicd' | 'vps-deploy' | 'frontend-deploy' | 'dev-testing' | 'sse' | 'memory' | 'webrtc' | 'ai-diction' | 'nuxt-deploy' | 'iphone-https';
 
 interface NavItem {
   id: string;
@@ -52,6 +54,16 @@ const App = () => {
         { id: 'step-3', title: '3. Actions Workflow' },
         { id: 'step-pm2', title: '4. PM2 Integration' },
         { id: 'step-4', title: '5. Nginx Config' },
+      ]
+    },
+    'vps-deploy': {
+      label: 'VPS CI/CD',
+      icon: 'lucide:zap',
+      sections: [
+        { id: 'step-1', title: '1. Server SSH Key' },
+        { id: 'step-2', title: '2. GitHub Secrets' },
+        { id: 'step-3', title: '3. Workflow File' },
+        { id: 'step-4', title: '4. Clean Up' },
       ]
     },
     'frontend-deploy': {
@@ -122,6 +134,19 @@ const App = () => {
         { id: 'step-2', title: '2. PM2' },
         { id: 'step-3', title: '3. Nginx' },
         { id: 'step-4', title: '4. SSL' },
+      ]
+    },
+    'iphone-https': {
+      label: 'iPhone HTTPS',
+      icon: 'lucide:smartphone',
+      sections: [
+        { id: 'overview', title: 'Overview' },
+        { id: 'step-1', title: '1. Install' },
+        { id: 'step-2', title: '2. Certs' },
+        { id: 'step-3', title: '3. Trust' },
+        { id: 'step-4', title: '4. Vite' },
+        { id: 'step-5', title: '5. Node.js' },
+        { id: 'step-6', title: '6. Env' },
       ]
     }
   };
@@ -246,6 +271,8 @@ const App = () => {
             {view === 'webrtc' && <WebRTCGuide />}
             {view === 'ai-diction' && <AIDictionGuide />}
             {view === 'nuxt-deploy' && <NuxtDeploymentGuide />}
+            {view === 'vps-deploy' && <VpsDeployGuide />}
+            {view === 'iphone-https' && <IPhoneHttpsGuide />}
 
             <footer className="mt-24 pt-10 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-400 text-[10px] uppercase tracking-widest font-bold">
               <p>© 2026 Development Documentation Suite</p>
